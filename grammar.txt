@@ -1,7 +1,0 @@
-S -> bA
-A -> b
-A -> aB
-B -> bC
-C -> cA
-A -> bA
-B -> aB
