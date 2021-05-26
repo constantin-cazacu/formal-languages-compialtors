@@ -318,7 +318,7 @@ def chomsky_transformation(cnf):
         cnf[key] = new_productions
 
     # Step 2: Bring productions to len 2 (for len >2)
-    KEYS = ['W', 'D', 'C', 'E', 'L', 'U', 'V', 'T', 'P', 'Q', 'R', 'M', 'K', 'N', 'O', 'G', 'H', 'F', 'I', 'J', 'Z']
+    KEYS = ['W', 'E', 'L', 'U', 'V', 'T', 'P', 'Q', 'R', 'M', 'K', 'N', 'O', 'G', 'H', 'F', 'I', 'J', 'Z']
     new_cnf2 = copy.deepcopy(cnf)
     for key, productions in new_cnf2.items():
         for production in productions:
