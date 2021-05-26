@@ -331,12 +331,12 @@ def cfg_to_cnf(cfg, terminals):
     """ Transforms Context-Free Grammar to Chomsky Normal Form """
 
     cnf = cfg
-    # initialize queue
 
     """ 1. Eliminate epsilon productions
         2. Eliminate unit productions
         3. Eliminate unproductive symbols
-        4. Eliminate inaccessible symbols """
+        4. Eliminate inaccessible symbols 
+        5. Chomsky Normal Form """
     remove_eps_prod(cnf)
     unit_productions(cnf)
     find_productive(cnf,terminals)
