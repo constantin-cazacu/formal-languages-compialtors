@@ -1,3 +1,4 @@
+import copy
 from pprint import pprint
 import itertools
 
@@ -26,7 +27,6 @@ def add_new_productions(cnf, list_of_combinations):
         new_production = generate_productions(production, combinations)
         cnf[key].append(new_production)
 
-    # pprint(cnf)
     return 0
 
 
@@ -54,7 +54,7 @@ def generate_list_of_positions(key_prod_pairs, list_of_keys, cnf):
                 list_of_positions.append(
                     (key, production, [i for i, letter in enumerate(production) if letter == null_key]))
     generate_list_of_combinations(list_of_positions, cnf)
-    # print("list of pos", list_of_positions)
+
     return list_of_positions
 
 
@@ -89,7 +89,6 @@ def get_eps_keys(cnf):
         if "" in productions:
             list_of_keys.append(key)
 
-    # print(list_of_keys)
     epsilon_keys_in_prod(list_of_keys, cnf)
 
     return list_of_keys
@@ -125,8 +124,7 @@ def remove_eps_prod(cnf):
         if len(productions) == 0:
             cnf.pop(key)
             remove_problematic_productions(list_of_keys, cnf)
-    # print("PPRINT ")
-    # pprint(cnf)
+
     return cnf
 
 
@@ -181,14 +179,14 @@ def unit_productions(cnf):
         prod_to_add = complete_unit_prod(cnf, unit_prod_list, key_list)
         add_prod_to_grammar(cnf, prod_to_add)
         remove_unit_productions(cnf,  unit_prod_list, key_list)
-    print("____________________________________")
-    pprint(cnf)
+
 
 def remove_unproductive(cnf, productive):
     for key in cnf.copy():
         if key not in productive:
             del cnf[key]
     return cnf
+
 
 def all_productive(production, productive):
     """ Returns true if production contains only productive symbols"""
@@ -217,14 +215,15 @@ def find_productive (cnf, terminals):
                     productive.add(key)
         old_productive = productive
         productive = new_productive
-    # print(productive)
+
     remove_unproductive(cnf, productive)
-    pprint(cnf)
+
 
 def is_unreachable(production, unreachable_symbols):
     for element in unreachable_symbols:
         if element in production:
             return True
+
 
 def remove_unreachable(cnf, unreachable_symbols):
     for key in cnf.copy():
@@ -234,7 +233,7 @@ def remove_unreachable(cnf, unreachable_symbols):
                 productions.remove(production)
         if key in unreachable_symbols:
             del cnf[key]
-    pprint(cnf)
+
 
 def unreachable(cnf):
     """ Remove unreachable symbols"""
@@ -247,13 +246,86 @@ def unreachable(cnf):
             for character in production:
                 if character.isupper():
                     prod_symbols.add(character)
-    print("keys", all_keys)
-    print(prod_symbols)
 
     unreachable_symbols = all_keys.symmetric_difference(prod_symbols)
-    print("_____________________________")
-    print(unreachable_symbols)
     remove_unreachable(cnf,unreachable_symbols)
+
+def is_mixed(production):
+    """
+    Returns True if a production contains
+    term and non-term symbols
+    """
+    all_lower = production.islower()
+    all_upper = production.isupper()
+
+    if all_upper or all_lower:
+        return False
+    else:
+        return True
+
+
+def substitute_terminals(production):
+    """
+    Substitute all terminals in production,
+    add keys accordingly
+    """
+    for character in production:
+        if character is 'a':
+            new_production = production.replace(character, 'X')
+        elif character is 'b':
+            new_production = production.replace(character, 'Y')
+
+    return new_production
+
+
+def remove_mixed(productions):
+    """Creates a new list of productions, cleansed of mixed results"""
+    mixed_productions = copy.deepcopy(productions)
+    for production in mixed_productions:
+        production_index = productions.index(production)
+        if is_mixed(production):
+            productions.pop(production_index)
+    return productions
+
+
+def shorten_production(cnf, key, production, KEYS):
+    """ Shorten all productions bigger than 2 characters """
+    productions = cnf[key]
+    production_index = productions.index(production)
+
+    new_key = KEYS.pop()
+    cnf[key][production_index] = production[0] + new_key
+    new_production = production[1:]
+    cnf[new_key] = [new_production, ]
+
+    if len(new_production) > 2:
+        shorten_production(cnf, new_key, new_production, KEYS)
+
+
+def chomsky_transformation(cnf):
+    # Step 0: we add the terminal equivalent transitions (hardcoded)
+    cnf['X'] = ['a']
+    cnf['Y'] = ['b']
+    # Step 1: All terms in non-terms (for mixed)
+    new_cnf = copy.deepcopy(cnf)
+    for key in cnf:
+        productions = new_cnf.get(key)
+        for production in productions:
+            if is_mixed(production):
+                new_production = substitute_terminals(production)
+                productions.append(new_production)
+        new_productions = remove_mixed(productions)
+        cnf[key] = new_productions
+
+    # Step 2: Bring productions to len 2 (for len >2)
+    KEYS = ['W', 'D', 'C', 'E', 'L', 'U', 'V', 'T', 'P', 'Q', 'R', 'M', 'K', 'N', 'O', 'G', 'H', 'F', 'I', 'J', 'Z']
+    new_cnf2 = copy.deepcopy(cnf)
+    for key, productions in new_cnf2.items():
+        for production in productions:
+            if len(production) > 2:
+                shorten_production(cnf, key, production, KEYS)
+                KEYS.pop()
+
 
 def cfg_to_cnf(cfg, terminals):
     """ Transforms Context-Free Grammar to Chomsky Normal Form """
@@ -269,46 +341,27 @@ def cfg_to_cnf(cfg, terminals):
     unit_productions(cnf)
     find_productive(cnf,terminals)
     unreachable(cnf)
-    pass
+    chomsky_transformation(cnf)
+    pprint(cnf)
 
-#
-# CFG = {
-#     "S": ["B",],
-#     "A": ["aX", "bX",],
-#     "X": ["", "BX", "b",],
-#     "B": ["AXaD",],
-#     "D": ["aD", "a",],
-#     "C": ["Ca",],
-# }
 
-# CFG = {
-#     "S": ["bA", "AC", ],
-#     "A": ["bS", "BC", "AbAa"],
-#     "B": ["BbaA", "a", "bSa"],
-#     "C": ["", ],
-#     "D": ["AB", ]
-# }
 CFG = {
- 'A': ['bS', 'AbAa', 'BbaA', 'a', 'bSa'],
- 'B': ['BbaA', 'a', 'bSa'],
- 'D': ['AB', 'E'],
- 'S': ['bA', 'bS', 'AbAa', 'BbaA', 'a', 'bSa'],
- 'E': ['J'],
- 'K': ['a']}
-#
-# CFG = {
-#     "S": ["aABC"],
-#     "A": ["AB", ""],
-#     "B": ["CA", "a"],
-#     "C": ["AA", "b"],
-# }
+    "S": ["B",],
+    "A": ["aX", "bX",],
+    "X": ["", "BX", "b",],
+    "B": ["AXaD",],
+    "D": ["aD", "a",],
+    "C": ["Ca",],
+}
 
 terminals = {"a", "b"}
-# terminals = {"1", "0"}
 
-# pprint(CFG)
 cfg_to_cnf(CFG,terminals)
-# # get_eps_keys(CFG)
-# remove_eps_prod(CFG)
-# find_productive(CFG, terminals)
-# unreachable(CFG)
+
+
+
+
+
+
+
+
