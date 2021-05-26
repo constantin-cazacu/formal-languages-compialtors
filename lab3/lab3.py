@@ -271,7 +271,7 @@ def substitute_terminals(production):
     """
     for character in production:
         if character is 'a':
-            new_production = production.replace(character, 'X')
+            new_production = production.replace(character, 'Z')
         elif character is 'b':
             new_production = production.replace(character, 'Y')
 
@@ -304,7 +304,7 @@ def shorten_production(cnf, key, production, KEYS):
 
 def chomsky_transformation(cnf):
     # Step 0: we add the terminal equivalent transitions (hardcoded)
-    cnf['X'] = ['a']
+    cnf['Z'] = ['a']
     cnf['Y'] = ['b']
     # Step 1: All terms in non-terms (for mixed)
     new_cnf = copy.deepcopy(cnf)
@@ -318,7 +318,7 @@ def chomsky_transformation(cnf):
         cnf[key] = new_productions
 
     # Step 2: Bring productions to len 2 (for len >2)
-    KEYS = ['W', 'E', 'L', 'U', 'V', 'T', 'P', 'Q', 'R', 'M', 'K', 'N', 'O', 'G', 'H', 'F', 'I', 'J', 'Z']
+    KEYS = ['W', 'E', 'L', 'U', 'V', 'T', 'P', 'Q', 'R', 'M', 'K', 'N', 'O', 'G', 'H', 'F', 'I', 'J']
     new_cnf2 = copy.deepcopy(cnf)
     for key, productions in new_cnf2.items():
         for production in productions:
